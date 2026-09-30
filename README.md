@@ -82,7 +82,7 @@ A single `docker compose up --build` reproduces the entire environment — nginx
 ### Steps
 
 ```bash
-git clone <this-repository-url>
+git clone https://github.com/christian-guardiana03/kitchen-equipment-app#5-running-tests
 cd kitchen-equipment-app
 
 docker compose up -d --build
