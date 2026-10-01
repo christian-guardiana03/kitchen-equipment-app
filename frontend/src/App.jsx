@@ -10,8 +10,8 @@ import EquipmentMaintenance from './pages/EquipmentMaintenance';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -20,7 +20,7 @@ export default function App() {
           <Route path="/admin/users" element={<SuperAdminRoute><UserMaintenance /></SuperAdminRoute>} />
           <Route path="/admin/equipment" element={<ProtectedRoute><EquipmentMaintenance /></ProtectedRoute>} /> 
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
