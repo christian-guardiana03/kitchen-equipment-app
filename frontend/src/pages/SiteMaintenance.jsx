@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import AdminLayout from '../components/AdminLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useNotification } from '../context/NotificationContext';
 
 const inputClass = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600";
 
@@ -15,6 +17,8 @@ export default function SiteMaintenance() {
     const [siteError, setSiteError] = useState('');
     const [equipmentError, setEquipmentError] = useState('');
     const [equipmentLoading, setEquipmentLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { showSuccess } = useNotification();
 
     const loadSites = async () => {
         try {
@@ -55,56 +59,74 @@ export default function SiteMaintenance() {
     };
 
     const detachEquipment = async (registeredEquipmentId) => {
+        setLoading(true);
         setEquipmentError('');
         try {
             await api.delete(`/api/sites/${editingSite.id}/equipment/${registeredEquipmentId}`);
             await openEquipmentEditor(editingSite);
             await loadSites();
+            showSuccess('Equipment removed from the site.');
         } catch {
             setEquipmentError('Could not remove equipment. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const attachEquipment = async (equipmentId) => {
+        setLoading(true);
         setEquipmentError('');
         try {
             await api.post(`/api/sites/${editingSite.id}/equipment`, { equipment_id: equipmentId });
             await openEquipmentEditor(editingSite);
             await loadSites();
+            showSuccess('Equipment added to the site.');
         } catch {
             setEquipmentError('Could not add equipment. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const deleteSite = async (id) => {
         if (!confirm('Delete this site? Its equipment will be unlinked, not deleted.')) return;
+        setLoading(true);
         setSiteError('');
         try {
             await api.delete(`/api/sites/${id}`);
             await loadSites();
+            showSuccess('Site deleted successfully.');
         } catch {
             setSiteError('Could not delete this site. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const saveSite = async (e) => {
         e.preventDefault();
+        setLoading(true);
         setErrors({});
         try {
-            if (formSite.id) {
+            const isEditing = Boolean(formSite.id);
+            if (isEditing) {
                 await api.put(`/api/sites/${formSite.id}`, formSite);
             } else {
                 await api.post('/api/sites', formSite);
             }
             setFormSite(null);
-            loadSites();
+            await loadSites();
+            showSuccess(`Site ${isEditing ? 'updated' : 'created'} successfully.`);
         } catch (err) {
             if (err.response?.status === 422) setErrors(err.response.data.errors);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <AdminLayout title="Sites">
+            <LoadingSpinner loading={loading} text="Processing..." />
             <div className="mb-4 flex items-center justify-between">
                 <input
                     placeholder="Filter by description..."
@@ -192,7 +214,7 @@ export default function SiteMaintenance() {
                         </label>
 
                         <div className="flex gap-2">
-                            <button type="submit" className="flex-1 rounded-md bg-teal-600 py-2 text-sm font-medium text-white hover:bg-teal-700">
+                            <button disabled={loading} type="submit" className="flex-1 rounded-md bg-teal-600 py-2 text-sm font-medium text-white hover:bg-teal-700">
                                 Save
                             </button>
                             <button type="button" onClick={() => setFormSite(null)} className="flex-1 rounded-md border border-slate-300 py-2 text-sm text-slate-600 hover:bg-slate-50">
@@ -252,7 +274,10 @@ export default function SiteMaintenance() {
                                 <li className="px-3 py-2 text-sm text-slate-400">No unassigned equipment.</li>
                             )}
                         </ul>
-                        <button onClick={() => setEditingSite(null)} className="w-full rounded-md border border-slate-300 py-2 text-sm text-slate-600 hover:bg-slate-50">
+                        <button 
+                            onClick={() => setEditingSite(null)} 
+                            className="w-full rounded-md border border-slate-300 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                        >
                             Close
                         </button>
                     </div>

@@ -23,7 +23,7 @@ class StoreSiteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'description' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:255', 'unique:sites,description'],
         ];
     }
 }

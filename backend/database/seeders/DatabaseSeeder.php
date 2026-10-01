@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'name' => 'Super Admin',
+            'first_name' => 'Super Admin',
             'user_name' => 'superadmin',
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password'),
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $admin = User::create([
-            'name' => 'Admin User',
+            'first_name' => 'Admin User',
             'user_name' => 'adminuser',
             'email' => 'adminuser@example.com',
             'password' => bcrypt('password'),
@@ -38,8 +38,5 @@ class DatabaseSeeder extends Seeder
         $site = Site::create(['user_id' => $admin->id, 'description' => 'Jollibee - Angeles', 'active' => true]);
         $equipment = Equipment::create(['user_id' => $admin->id, 'serial_number' => 'FRZ-001', 'description' => 'Freezer', 'condition' => 'working']);
         RegisteredEquipment::create(['site_id' => $site->id, 'equipment_id' => $equipment->id]);
-
-        Equipment::create(['user_id' => $admin->id, 'serial_number' => 'FRZ-001', 'description' => 'Freezer', 'condition' => 'working']);
-
     }
 }

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Signup() {
     const [form, setForm] = useState({
@@ -13,17 +15,23 @@ export default function Signup() {
     const [errors, setErrors] = useState({});
     const { register } = useAuth();
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const { showSuccess } = useNotification();
 
     const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         setErrors({});
         try {
             await register(form);
+            showSuccess('Your account was created successfully.');
             navigate('/admin');
         } catch (err) {
             if (err.response?.status === 422) setErrors(err.response.data.errors);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -42,6 +50,7 @@ export default function Signup() {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+            <LoadingSpinner loading={loading} text="Creating account..." />
             <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
                 <p className="text-xs text-slate-400">Kitchen Equipment</p>
                 <h1 className="mb-6 text-xl font-semibold text-slate-900">Create account</h1>

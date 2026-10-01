@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import AdminLayout from '../components/AdminLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useNotification } from '../context/NotificationContext';
 
 const inputClass = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600";
 
@@ -10,8 +12,13 @@ export default function UserMaintenance() {
     const [formUser, setFormUser] = useState(null);
     const [errors, setErrors] = useState({});
     const [userError, setUserError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { showSuccess } = useNotification();
 
-    const load = () => api.get('/api/users').then(res => setUsers(res.data.data));
+    const load = async () => {
+        const res = await api.get('/api/users');
+        setUsers(res.data.data);
+    };
     useEffect(() => { load(); }, []);
 
     const query = search.toLowerCase();
@@ -23,29 +30,39 @@ export default function UserMaintenance() {
     const deleteUser = async (id) => {
         setUserError('');
         if (!confirm('Delete this user? All their sites and equipment will be deleted too.')) return;
+        setLoading(true);
         try {
             await api.delete(`/api/users/${id}`);
-            load();
+            await load();
+            showSuccess('User deleted successfully.');
         } catch {
             setUserError('Deleting user failed. Please try again.');
+        } finally {
+            setLoading(false);
         }
 
     };
 
     const saveUser = async (e) => {
         e.preventDefault();
+        setLoading(true);
         setErrors({});
         try {
+            const name = [formUser.first_name, formUser.last_name].filter(Boolean).join(' ');
             await api.put(`/api/users/${formUser.id}`, formUser);
             setFormUser(null);
-            load();
+            await load();
+            showSuccess(`${name || 'User'} updated successfully.`);
         } catch (err) {
             if (err.response?.status === 422) setErrors(err.response.data.errors);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <AdminLayout title="Users">
+            <LoadingSpinner loading={loading} text="Processing..." />
             <input
                 placeholder="Filter by name, username, or email..."
                 value={search}

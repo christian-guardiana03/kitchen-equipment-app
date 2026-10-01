@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from './LoadingSpinner';
+import { useNotification } from '../context/NotificationContext';
 
 const navItemClass = (active) =>
     `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${active ? 'bg-teal-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -9,15 +12,24 @@ export default function AdminLayout({ children, title }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const [loading, setLoading] = useState(false);
+    const { showSuccess } = useNotification();
 
 
     const handleLogout = async () => {
-        await logout();
-        navigate('/login');
+        setLoading(true);
+        try {
+            await logout();
+            showSuccess('You have been logged out.');
+            navigate('/login');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="flex min-h-screen bg-slate-50">
+            <LoadingSpinner loading={loading} text="Logging out..." />
             <aside className="flex w-56 flex-col justify-between bg-slate-900 px-3 py-6">
                 <div>
                     <div className="mb-8 px-3">

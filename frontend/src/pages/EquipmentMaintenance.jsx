@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import AdminLayout from '../components/AdminLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useNotification } from '../context/NotificationContext';
 
 const inputClass = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600";
 
@@ -10,8 +12,13 @@ export default function EquipmentMaintenance() {
   const [formEq, setFormEq] = useState(null); // { id?, serial_number, description, condition }
   const [errors, setErrors] = useState({});
   const [equipmentError, setEquipmentError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { showSuccess } = useNotification();
 
-  const load = () => api.get('/api/equipment').then(res => setEquipment(res.data.data));
+  const load = async () => {
+    const res = await api.get('/api/equipment');
+    setEquipment(res.data.data);
+  };
   useEffect(() => { load(); }, []);
 
   const filtered = equipment.filter(eq =>
@@ -23,33 +30,43 @@ export default function EquipmentMaintenance() {
     setEquipmentError('');
     if (!confirm('Delete this equipment?')) return;
 
+    setLoading(true);
     try {
       await api.delete(`/api/equipment/${id}`);
-      load();
+      await load();
+      showSuccess('Equipment deleted successfully.');
     } catch (error) {
       setEquipmentError('Deleting the equipment failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
 
   };
 
   const saveEquipment = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setErrors({});
     try {
-      if (formEq.id) {
+      const isEditing = Boolean(formEq.id);
+      if (isEditing) {
         await api.put(`/api/equipment/${formEq.id}`, formEq);
       } else {
         await api.post('/api/equipment', formEq);
       }
       setFormEq(null);
-      load();
+      await load();
+      showSuccess(`Equipment ${isEditing ? 'updated' : 'created'} successfully.`);
     } catch (err) {
       if (err.response?.status === 422) setErrors(err.response.data.errors);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <AdminLayout title="Equipments">
+      <LoadingSpinner loading={loading} text="Processing..." />
       <div className="mb-4 flex items-center justify-between">
         <input
           placeholder="Filter by description or serial..."
